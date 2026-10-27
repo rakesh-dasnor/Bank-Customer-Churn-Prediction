@@ -1,0 +1,301 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Customer Churn Prediction</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 15px;
+            font-family: Arial, sans-serif;
+            background: #f3f6fb;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: auto;
+            padding: 30px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            text-align: center;
+            color: #123b70;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            font-size: 21px;
+            margin-bottom: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font-size: 15px;
+            background: white;
+        }
+
+        input:focus, select:focus {
+            outline: 2px solid #93c5fd;
+            border-color: #2563eb;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 12px;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: #155eef;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1047b8;
+        }
+
+        .result {
+            margin-top: 28px;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .result h2 {
+            margin-top: 0;
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .error {
+            background: #fff7ed;
+            color: #9a3412;
+        }
+
+        .probability {
+            font-size: 30px;
+            font-weight: bold;
+            margin: 12px 0;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 25px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="container">
+
+        <h1>🏦 Bank Customer Churn Prediction</h1>
+
+        <p class="description">
+            Predict whether a bank customer is likely to leave the bank.
+        </p>
+
+        <h2>Enter Customer Details</h2>
+
+        <form action="{{ url_for('predict') }}" method="POST">
+
+            <div class="form-grid">
+
+                <div>
+                    <div class="field">
+                        <label for="CreditScore">Credit Score</label>
+                        <input type="number" id="CreditScore"
+                               name="CreditScore"
+                               min="300" max="900"
+                               value="{{ form_data.get('CreditScore', 650) }}"
+                               required>
+                    </div>
+
+                    <div class="field">
+                        <label for="Geography">Geography</label>
+                        <select id="Geography" name="Geography" required>
+                            {% for country in ['France', 'Germany', 'Spain', 'India'] %}
+                            <option value="{{ country }}"
+                                {% if form_data.get('Geography', 'France') == country %}selected{% endif %}>
+                                {{ country }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="Gender">Gender</label>
+                        <select id="Gender" name="Gender" required>
+                            {% for item in ['Male', 'Female'] %}
+                            <option value="{{ item }}"
+                                {% if form_data.get('Gender', 'Male') == item %}selected{% endif %}>
+                                {{ item }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="Age">Age</label>
+                        <input type="number" id="Age" name="Age"
+                               min="18" max="100"
+                               value="{{ form_data.get('Age', 35) }}"
+                               required>
+                    </div>
+
+                    <div class="field">
+                        <label for="Tenure">Tenure (Years)</label>
+                        <input type="number" id="Tenure" name="Tenure"
+                               min="0" max="10"
+                               value="{{ form_data.get('Tenure', 5) }}"
+                               required>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="field">
+                        <label for="Balance">Balance</label>
+                        <input type="number" id="Balance" name="Balance"
+                               min="0" step="any"
+                               value="{{ form_data.get('Balance', 50000) }}"
+                               required>
+                    </div>
+
+                    <div class="field">
+                        <label for="NumOfProducts">Number of Products</label>
+                        <select id="NumOfProducts" name="NumOfProducts" required>
+                            {% for n in [1, 2, 3, 4] %}
+                            <option value="{{ n }}"
+                                {% if form_data.get('NumOfProducts', 1)|int == n %}selected{% endif %}>
+                                {{ n }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="HasCrCard">Has Credit Card?</label>
+                        <select id="HasCrCard" name="HasCrCard" required>
+                            <option value="1"
+                                {% if form_data.get('HasCrCard', '1')|string == '1' %}selected{% endif %}>
+                                Yes
+                            </option>
+                            <option value="0"
+                                {% if form_data.get('HasCrCard', '1')|string == '0' %}selected{% endif %}>
+                                No
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="IsActiveMember">Active Member?</label>
+                        <select id="IsActiveMember" name="IsActiveMember" required>
+                            <option value="1"
+                                {% if form_data.get('IsActiveMember', '1')|string == '1' %}selected{% endif %}>
+                                Yes
+                            </option>
+                            <option value="0"
+                                {% if form_data.get('IsActiveMember', '1')|string == '0' %}selected{% endif %}>
+                                No
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="EstimatedSalary">Estimated Salary</label>
+                        <input type="number" id="EstimatedSalary"
+                               name="EstimatedSalary"
+                               min="0" step="any"
+                               value="{{ form_data.get('EstimatedSalary', 50000) }}"
+                               required>
+                    </div>
+                </div>
+
+            </div>
+
+            <button type="submit">Predict Churn</button>
+        </form>
+
+        {% if prediction is defined and prediction is not none %}
+        <section class="result {% if prediction == 1 %}danger{% else %}success{% endif %}">
+            <h2>Prediction Result</h2>
+
+            <p class="probability">
+                {{ "%.2f"|format(probability * 100) }}%
+            </p>
+
+            <p>Churn Probability</p>
+
+            {% if prediction == 1 %}
+                <strong>Customer is likely to leave the bank.</strong>
+            {% else %}
+                <strong>Customer is likely to stay with the bank.</strong>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        {% if error %}
+        <section class="result error">
+            <strong>Prediction Error</strong>
+            <p>{{ error }}</p>
+        </section>
+        {% endif %}
+
+    </main>
+</body>
+</html>
